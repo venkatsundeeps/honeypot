@@ -14,15 +14,23 @@ app = FastAPI(title="Agentic Honey-Pot API")
 
 @app.post("/honeypot")
 async def honeypot(payload: dict, auth=Depends(verify_api_key)):
-    # ✅ INPUT VALIDATION (CRITICAL)
-    conversation_id = payload.get("conversation_id")
-    message = payload.get("message")
+    # Accept flexible input formats
+    conversation_id = (
+        payload.get("conversation_id")
+        or payload.get("conversationId")
+        or "default-conversation"
+    )
 
-    if not conversation_id or not isinstance(conversation_id, str):
-        raise HTTPException(status_code=400, detail="conversation_id is required")
+    message = (
+        payload.get("message")
+        or payload.get("text")
+        or payload.get("content")
+    )
 
-    if not message or not isinstance(message, str):
-        raise HTTPException(status_code=400, detail="message is required")
+    # 🔥 IMPORTANT: Never reject the request body
+    if not message:
+        message = ""
+
 
     convo = get_conversation(conversation_id)
     convo["turns"] += 1
